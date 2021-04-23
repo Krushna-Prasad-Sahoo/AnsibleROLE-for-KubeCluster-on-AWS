@@ -1,0 +1,7 @@
+- hosts: Kubemaster
+  roles:
+  - role: KubeMaster
+
+- hosts: KubeSlave
+  roles:
+  - role: KubeSlave

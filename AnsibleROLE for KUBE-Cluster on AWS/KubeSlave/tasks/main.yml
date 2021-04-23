@@ -1,0 +1,63 @@
+- hosts: KubeSlave
+  tasks:
+    - name: Docker Install
+      package:
+        name: docker
+        state: present
+
+    - name: YUM configuration for Kubernetes
+      yum_repository:
+        name: Kubernetes
+        description: YUM configuration for Kubernetes
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg  https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        repo_gpgcheck: yes
+
+
+    - name: Kubeadm Install
+      yum:
+         name: kubeadm
+         disable_excludes: kubernetes
+
+    - name: iproute-tc Intsall
+      package:
+         name: iproute-tc
+         state: present
+
+
+    - name: Docker & Kub Service Start 
+      service:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+      loop:
+         - docker
+         - kubelet
+
+    - name: driver chnage to systemd
+      copy:
+        dest: /etc/docker/daemon.json
+        src: daemon.json
+
+    - name: Docker restart
+      service:
+         name:  docker
+         state: restarted
+
+
+    - name: conf file
+      copy:
+        dest: /etc/sysctl.d/Kube.conf
+        src: Kube.conf
+
+    - name: sysctl restart
+      shell: "sysctl --system"
+
+    - name: Joining the Slaves with the master
+      command: "kubeadm join 172.23.0.13:6443 --token 77m4jkm.23zhpthknzfo3r6zn     --discovery-token-ca-cert-hash sha256:c69HXe7aYcqkS1bKmH4faEnHAWxn6i2bHZ2mD04j7409a5d95a6c0ed0e146a0"
+
+
+    - debug:
+          msg: KubeSlave is configured successfully.

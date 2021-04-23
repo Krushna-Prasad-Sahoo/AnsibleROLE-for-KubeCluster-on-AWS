@@ -1,0 +1,47 @@
+- hosts: localhost
+  vars_files:
+   - secure.yml
+  tasks:
+   
+   - name: Launching 1 EC2 Instance for the Master Node
+     ec2: 
+        
+        instance_type: t2.micro
+        image: ami-0bcf5425cdc1d8a85
+        wait: yes
+        group_id: sg-0ee1de753a7ea0caf
+        count: 1
+        region: ap-south-1
+        instance_tags:
+           Name: K8S_Master
+           Cluster: K8s Cluster
+        vpc_subnet_id: subnet-93730ddf
+        assign_public_ip: yes
+        state: present
+        key_name: ARTHimran
+        aws_access_key: "{{ accesskey }}"
+        aws_secret_key: "{{ secretkey }}"
+
+- hosts: localhost
+  
+  tasks:
+   
+    - name: Launching 2 EC2 Instances for Worker Nodes
+      ec2:
+   
+        instance_type: t2.micro
+        image: ami-0bcf5425cdc1d8a85
+        wait: yes
+        group_id: sg-0ee1de753a7ea0caf
+        count: 2
+        region: ap-south-1
+        instance_tags:
+           Name: K8S_Slave
+           Cluster: K8s Cluster
+        vpc_subnet_id: subnet-93730ddf
+        assign_public_ip: yes
+        state: present
+        key_name: ARTHimran
+        aws_access_key: "{{ accesskey }}"
+        aws_secret_key: "{{ secretkey }}"
+     

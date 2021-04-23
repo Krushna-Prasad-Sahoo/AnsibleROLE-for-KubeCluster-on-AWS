@@ -1,0 +1,83 @@
+- hosts: masterNode
+  tasks:
+
+    - name: Docker Install
+      package:
+        name: docker
+        state: present
+
+    - name: YUM Repo for Kubernetes
+      yum_repository:
+        name: Kubernetes
+        description: YUM Repo for Kubernetes
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg  https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        repo_gpgcheck: yes
+
+    - name: Kubeadm Install
+      yum:
+         name: kubeadm
+         disable_excludes: kubernetes
+
+    - name: iproute-tc Intsall
+      package:
+         name: iproute-tc
+         state: present
+
+    - name: Docker and Kubelet service start
+      service:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+      loop:
+         - docker
+         - kubelet
+
+    - name: Replacing docker driver to systemd
+      copy:
+        dest: /etc/docker/daemon.json
+        src: daemon.json
+
+    - name: Restart Docker
+      service:
+         name:  docker
+         state: restarted
+
+    - name: Pulling the required images for the Cluster
+      shell: kubeadm config images pull
+
+    - name: Copying conf file for sysctl
+      copy:
+        dest: /etc/sysctl.d/Kube.conf
+        src: k8s.conf
+
+    - name: Restart sysctl
+      shell: "sysctl --system"
+
+
+    - name: Start kubeadm
+      shell: "kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=NumCPU  --ignore-preflight-errors=Mem  --node-name=master"
+
+    - name: KubeMaster to KubeUser Step 1
+      shell: "mkdir -p $HOME/.kube"
+
+    - name: KubeMaster to KubeUser Step 2
+      shell: "cp -i /etc/kubernetes/admin.conf $HOME/.kube/config"
+
+    - name: KubeMaster to KubeUser Step 3
+      shell: "chown $(id -u):$(id -g) $HOME/.kube/config"
+
+    - name: Flannel for Overlay Network
+      command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+
+    - name: JoiningToken creation
+      command: "kubeadm token create --print-join-command"
+      register: JoiningToken
+
+    - debug:
+          msg: KubeMaster has configured successfully.
+
+    - debug:
+           var: JoiningToken['stdout']
