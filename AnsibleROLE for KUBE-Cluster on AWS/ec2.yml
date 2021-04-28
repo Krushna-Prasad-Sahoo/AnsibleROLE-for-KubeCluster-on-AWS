@@ -18,7 +18,7 @@
         vpc_subnet_id: subnet-93730ddf
         assign_public_ip: yes
         state: present
-        key_name: ARTHimran
+        key_name: Kube
         aws_access_key: "{{ accesskey }}"
         aws_secret_key: "{{ secretkey }}"
 
@@ -41,7 +41,7 @@
         vpc_subnet_id: subnet-93730ddf
         assign_public_ip: yes
         state: present
-        key_name: ARTHimran
+        key_name: Kube
         aws_access_key: "{{ accesskey }}"
         aws_secret_key: "{{ secretkey }}"
      
